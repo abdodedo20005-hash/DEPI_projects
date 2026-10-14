@@ -21,12 +21,21 @@ def search_products(
     category: str | None = None,
 ) -> list[dict]:
     """Search store products by keyword. Optionally filter by max price,
-    minimum rating and category. Returns up to 5 products, best rated first."""
-    sql = "SELECT id, name, category, price, stock, rating FROM products WHERE 1=1"
+    minimum rating and category. Returns up to 5 products, best rated first.
+
+    Every word must appear in the product name OR in its category path, so
+    "smartphones" finds phones even when the name never says "smartphone"."""
+    sql = (
+        "SELECT id, name, category, sub_category, price, stock, rating "
+        "FROM products WHERE 1=1"
+    )
     params: list = []
-    for word in query.split():  
-        sql += " AND name LIKE ?"
-        params.append(f"%{word}%")
+
+    for word in query.lower().split():
+        if len(word) > 3 and word.endswith("s"):
+            word = word[:-1]  # "cables" -> "cable"
+        sql += " AND (name LIKE ? OR category_path LIKE ?)"
+        params += [f"%{word}%", f"%{word}%"]
 
     if max_price is not None:
         sql += " AND price <= ?"
@@ -35,7 +44,7 @@ def search_products(
         sql += " AND rating >= ?"
         params.append(min_rating)
     if category:
-        sql += " AND category LIKE ?"
+        sql += " AND category_path LIKE ?"
         params.append(f"%{category}%")
 
     sql += " ORDER BY rating DESC LIMIT ?"

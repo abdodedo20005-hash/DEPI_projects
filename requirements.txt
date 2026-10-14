@@ -5,3 +5,4 @@ langgraph
 langchain-ollama
 langchain-groq
 fpdf2
+streamlit

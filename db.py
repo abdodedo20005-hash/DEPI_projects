@@ -55,7 +55,9 @@ CREATE TABLE IF NOT EXISTS products (
     price       REAL NOT NULL,
     stock       INTEGER NOT NULL DEFAULT 0,
     description TEXT,
-    rating      REAL
+    rating      REAL,
+    category_path TEXT,
+    sub_category  TEXT
 );
 
 CREATE TABLE IF NOT EXISTS customers (
@@ -108,8 +110,10 @@ def load_products() -> int:
 
     df["price"] = df["price"].apply(_clean_price)
     df["rating"] = pd.to_numeric(df["rating"], errors="coerce")
-    # Category may look like "A|B|C", so keep only the first part
-    df["category"] = df["category"].astype(str).str.split("|").str[0]
+    # Category looks like "A|B|C": keep the full path, the last part and the first part
+    df["category_path"] = df["category"].astype(str)
+    df["sub_category"] = df["category_path"].str.split("|").str[-1]
+    df["category"] = df["category_path"].str.split("|").str[0]
     df["brand"] = df["name"].apply(_guess_brand)
     df["stock"] = [random.randint(0, 50) for _ in range(len(df))]
 
