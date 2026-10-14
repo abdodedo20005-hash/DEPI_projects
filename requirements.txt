@@ -1,8 +1,15 @@
+# Core
 pandas
 python-dotenv
+streamlit
+fpdf2
+
+# LangChain / LangGraph
 langchain-core
 langgraph
-langchain-ollama
 langchain-groq
-fpdf2
-streamlit
+langchain-ollama
+
+# RAG (CP6)
+sentence-transformers
+faiss-cpu

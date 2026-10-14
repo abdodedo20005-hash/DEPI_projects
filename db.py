@@ -15,7 +15,10 @@ import re
 import sqlite3
 from pathlib import Path
 
-import pandas as pd
+try:
+    import pandas as pd
+except ImportError:
+    pd = None  # pandas is optional for test runs
 
 # ------------------------------------------------------------------
 # Settings: adjust to match your CSV file
@@ -104,7 +107,12 @@ def _guess_brand(name: str) -> str:
 
 
 def load_products() -> int:
-    """Read the CSV and load products into the products table. Return the count."""
+    """Read the CSV and load products into the products table. Return the count.
+    If pandas is not available, skip loading and return 0.
+    """
+    if pd is None:
+        print("[warn] pandas not installed – skipping product load.")
+        return 0
     df = pd.read_csv(CSV_PATH)
     df = df.rename(columns=COLUMN_MAP)[list(COLUMN_MAP.values())]
 
