@@ -1,15 +1,10 @@
-# Core
 pandas
 python-dotenv
-streamlit
-fpdf2
-
-# LangChain / LangGraph
 langchain-core
 langgraph
-langchain-groq
 langchain-ollama
-
-# RAG (CP6)
+langchain-groq
+fpdf2
+streamlit
 sentence-transformers
 faiss-cpu

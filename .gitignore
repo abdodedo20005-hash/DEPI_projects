@@ -1,31 +1,7 @@
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-.venv/
-venv/
-.env
-
-# Data & DB
 data/
-*.db
-
-# Secrets
+.venv/
+__pycache__/
 .env
-*.key
-
-# RAG cache
-.rag_cache.pkl
-
-# Invoices (generated at runtime)
+*.pdf
 invoices/
-eval_invoices/
 test_invoices/
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
