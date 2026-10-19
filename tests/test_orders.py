@@ -173,3 +173,4 @@ if __name__ == "__main__":
             failed += 1
             print(f"FAIL  {fn.__name__}: {exc!r}")
     print(f"\n{len(tests) - failed}/{len(tests)} tests passed")
+    raise SystemExit(1 if failed else 0)
