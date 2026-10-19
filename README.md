@@ -196,3 +196,5 @@ The project was built in checkpoints (git tags `cp1` ... `cp5`): data layer, sea
 Built as a DEPI course project.
 
 - **Abdelrahman Osama Mekhemer** · [GitHub](https://github.com/abdodedo20005-hash) · [LinkedIn](https://linkedin.com/in/abdelrahman-osama20005)
+
+- **Abdelrahman Ahmed Elhabian** · [GitHub](https://github.com/abdelrahman-elhabian) · [LinkedIn](https://linkedin.com/in/abdelrahmanelhabian)
