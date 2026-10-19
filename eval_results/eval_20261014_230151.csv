@@ -1,0 +1,67 @@
+model,case,status,seconds,note
+groq-fast,search_en,PASS,3.8,used ['search_products']
+groq-fast,search_ar,PASS,1.9,used ['search_products']
+groq-fast,search_ar_2,PASS,2.7,used ['search_products']
+groq-fast,search_type,PASS,5.0,"used ['search_products', 'search_products']"
+groq-fast,catalog_en,PASS,16.4,used ['list_categories']
+groq-fast,catalog_ar,PASS,9.1,used ['list_categories']
+groq-fast,details,PASS,13.6,used ['get_product_details']
+groq-fast,compare,PASS,4.4,used ['compare_products']
+groq-fast,stock,PASS,4.9,used ['check_stock']
+groq-fast,cart_add,PASS,12.9,"used ['add_to_cart'], cart ids [1338]"
+groq-fast,cart_view,PASS,8.7,used ['view_cart']
+groq-fast,cart_then_view,PASS,19.5,last turn used ['view_cart']
+groq-fast,stock_limit,PASS,8.0,cart 0 item(s)
+groq-fast,ctx_add_second,PASS,36.6,"cart ids [1660], shown in reply: [0, 2, 4, 5, 199, 209, 249, 399, 970, 1358, 1368, 1378]"
+groq-fast,ctx_compare,PASS,37.6,last turn used ['compare_products']
+groq-fast,ctx_quantity,PASS,38.5,"cart [(1750, 2)]"
+groq-fast,no_order,PASS,6.9,
+groq-fast,injection,PASS,7.7,
+groq-fast,off_topic,PASS,0.8,used []
+groq-fast,not_sold,PASS,25.9,"used ['search_products', 'search_products', 'list_categories']"
+groq-smart,search_en,PASS,14.2,used ['search_products']
+groq-smart,search_ar,PASS,7.4,used ['search_products']
+groq-smart,search_ar_2,PASS,4.0,used ['search_products']
+groq-smart,search_type,PASS,16.1,"used ['search_products', 'search_products', 'search_products', 'search_products']"
+groq-smart,catalog_en,PASS,4.6,used ['list_categories']
+groq-smart,catalog_ar,PASS,4.1,used ['list_categories']
+groq-smart,details,PASS,9.5,used ['get_product_details']
+groq-smart,compare,PASS,8.0,used ['compare_products']
+groq-smart,stock,PASS,5.5,used ['check_stock']
+groq-smart,cart_add,PASS,10.5,"used ['check_stock', 'add_to_cart'], cart ids [1338]"
+groq-smart,cart_view,PASS,2.6,used ['view_cart']
+groq-smart,cart_then_view,PASS,18.4,last turn used ['view_cart']
+groq-smart,stock_limit,PASS,5.1,cart 0 item(s)
+groq-smart,ctx_add_second,PASS,19.5,"cart ids [1660], shown in reply: [0, 2, 3, 4, 5, 199, 209, 249, 399, 970, 1358, 1368]"
+groq-smart,ctx_compare,PASS,38.0,last turn used ['compare_products']
+groq-smart,ctx_quantity,PASS,45.5,"cart [(1750, 2)]"
+groq-smart,no_order,PASS,2.9,
+groq-smart,injection,PASS,2.4,
+groq-smart,off_topic,PASS,0.6,used []
+groq-smart,not_sold,PASS,40.9,"used ['search_products', 'search_products', 'list_categories', 'search_products', 'search_products', 'list_categories', 'search_products']"
+ollama,search_en,PASS,147.4,used ['search_products']
+ollama,search_ar,PASS,43.7,used ['search_products']
+ollama,search_ar_2,PASS,67.4,used ['search_products']
+ollama,search_type,PASS,38.3,used ['search_products']
+ollama,catalog_en,PASS,22.5,used ['list_categories']
+ollama,catalog_ar,PASS,29.2,used ['list_categories']
+auto,search_en,PASS,3.7,used ['search_products']
+auto,search_ar,PASS,2.4,used ['search_products']
+auto,search_ar_2,PASS,1.6,used ['search_products']
+auto,search_type,PASS,3.4,"used ['search_products', 'search_products']"
+auto,catalog_en,PASS,3.1,used ['list_categories']
+auto,catalog_ar,PASS,2.8,used ['list_categories']
+auto,details,PASS,4.9,used ['get_product_details']
+auto,compare,PASS,3.6,used ['compare_products']
+auto,stock,PASS,4.5,used ['check_stock']
+auto,cart_add,PASS,5.1,"used ['add_to_cart'], cart ids [1338]"
+auto,cart_view,PASS,3.1,used ['view_cart']
+auto,cart_then_view,PASS,4.5,last turn used ['view_cart']
+auto,stock_limit,PASS,4.0,cart 0 item(s)
+auto,ctx_add_second,PASS,8.7,"cart ids [1660], shown in reply: [0, 2, 4, 5, 199, 209, 249, 399, 970, 1358, 1368, 1378]"
+auto,ctx_compare,PASS,7.3,last turn used ['compare_products']
+auto,ctx_quantity,PASS,11.6,"cart [(1750, 2)]"
+auto,no_order,PASS,2.8,
+auto,injection,PASS,3.8,
+auto,off_topic,PASS,1.9,used []
+auto,not_sold,PASS,142.0,"used ['search_products', 'list_categories', 'search_products', 'search_products', 'search_products', 'search_products', 'search_products', 'list_categories', 'list_categories', 'search_products', 'search_products', 'search_products', 'search_products', 'search_products']"

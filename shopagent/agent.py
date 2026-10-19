@@ -16,16 +16,16 @@ Model routing:
 import os
 import re
 import time
+from typing import Annotated
 
 from dotenv import find_dotenv, load_dotenv
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.prebuilt import create_react_agent
+from langgraph.prebuilt import InjectedState, create_react_agent
 
-import orders
-import queries
-import tools as store
+from shopagent import orders, queries, rag
+from shopagent import tools as store
 
 load_dotenv(find_dotenv(usecwd=True))
 
@@ -153,9 +153,46 @@ def list_categories(category: str | None = None) -> dict:
     return {"categories": {queries.pretty(t): sum(s.values()) for t, s in sorted(tree.items())}}
 
 
+POLICY_UNAVAILABLE = "Policy retrieval is unavailable. I cannot verify the policy right now."
+
+
+def policy_query(messages, tool_question=""):
+    """The text the policy is searched with: the customer's latest message, plus the one
+    before it when the latest is a short follow-up such as "and how long does it last?"
+    (searching a follow-up alone would lose its topic)."""
+    humans = [
+        m.content.strip()
+        for m in messages
+        if m.type == "human" and isinstance(m.content, str) and m.content.strip()
+    ]
+    if not humans:
+        return tool_question.strip()
+    if len(humans) > 1 and len(humans[-1].split()) < 6:
+        return humans[-2] + " " + humans[-1]
+    return humans[-1]
+
+
+@tool
+def answer_policy(
+    messages: Annotated[list, InjectedState("messages")],
+    question: str = "",
+) -> str:
+    """Retrieve the store's return, refund, defective-item, warranty or related return-shipping
+    policy. The customer's question is read from the conversation, so the argument is optional.
+    Use it for policy questions, not for product searches."""
+    try:
+        query = policy_query(messages, question)
+        if not query:
+            return POLICY_UNAVAILABLE
+        return rag.answer(query)
+    except Exception as exc:
+        print(f"[warn] policy retrieval failed: {type(exc).__name__}")
+        return POLICY_UNAVAILABLE
+
+
 TOOLS = [
     search_products, get_product_details, compare_products, check_stock,
-    add_to_cart, remove_from_cart, view_cart, list_categories,
+    add_to_cart, remove_from_cart, view_cart, list_categories, answer_policy,
 ]
 
 
@@ -173,6 +210,17 @@ Browsing rules:
 - When the customer says "the first", "the second" or "the last one", refer to the
   products you listed in your previous message and use their ids.
 - Prices are in Indian rupees (INR) unless told otherwise.
+
+Policy rules:
+- For return, refund, damaged-item, warranty or related return-shipping questions, call
+  answer_policy (no arguments are needed: it reads the customer's question).
+- Answer only from the retrieved policy text. If it contains the answer, do not
+  claim the information is missing. End the answer with the source title shown in the
+  evidence, for example "Source: Return & Warranty Policy". Never mention file names.
+- Match the latest customer's language. For Arabic questions, write the final
+  answer in Arabic script (except for the source title and numbers).
+- If the policy tool finds no answer or fails, say you cannot verify the policy.
+  Never invent a return period, warranty term, exception or shipping time.
 
 Cart rules:
 - Use add_to_cart only after the customer chose a product. If no quantity is given, use 1.
@@ -304,6 +352,19 @@ def as_text(content):
     return str(content)
 
 
+def policy_language_fallback(question, reply, evidence):
+    """Show a policy excerpt when an English question gets a mostly Arabic reply."""
+    arabic_count = len(re.findall(r"[\u0600-\u06ff]", reply))
+    english_count = len(re.findall(r"[A-Za-z]", reply))
+    if re.search(r"[\u0600-\u06ff]", question) or arabic_count <= english_count:
+        return reply
+    heading = next((line.strip() for line in evidence.splitlines() if line.startswith("## ")), "")
+    bullets = [line.strip() for line in evidence.splitlines() if line.strip().startswith("- ")]
+    if not bullets:
+        return reply
+    return "Relevant policy excerpt:\n" + "\n".join([heading, *bullets] if heading else bullets)
+
+
 def chat(message, thread_id="demo", skip=()):
     """Send a message to the agent. Returns a dict with the reply and some debug info.
     Raises RuntimeError if every model fails."""
@@ -330,12 +391,39 @@ def chat(message, thread_id="demo", skip=()):
             for m in messages[last_human + 1 :]
             for call in (getattr(m, "tool_calls", None) or [])
         ]
+        model_reply = as_text(messages[-1].content)
+        reply = model_reply
+        policy_sources = []
+        policy_titles = []
+        used_policy_excerpt = False
+        source_label_added = False
+        if "answer_policy" in tools_used:
+            evidence = "\n".join(
+                as_text(m.content)
+                for m in messages[last_human + 1 :]
+                if m.type == "tool" and getattr(m, "name", None) == "answer_policy"
+            )
+            policy_sources = sorted(set(re.findall(r"\[([\w.-]+\.md)\]", evidence)))
+            policy_titles = list(dict.fromkeys(re.findall(r'Source title: "([^"]+)"', evidence)))
+            if policy_sources:
+                reply = policy_language_fallback(message, reply, evidence)
+                used_policy_excerpt = reply != model_reply
+                labels = policy_titles or policy_sources
+                if not any(x.lower() in reply.lower() for x in labels + policy_sources):
+                    label = "المصدر" if re.search(r"[\u0600-\u06ff]", message) else "Source"
+                    reply += "\n\n" + label + ": " + ", ".join(labels)
+                    source_label_added = True
         return {
-            "reply": as_text(messages[-1].content),
+            "reply": reply,
+            "model_reply": model_reply,
             "model": name,
             "task": kind,
             "seconds": round(time.time() - start, 1),
             "tools": tools_used,
+            "policy_sources": policy_sources,
+            "policy_titles": policy_titles,
+            "used_policy_excerpt": used_policy_excerpt,
+            "source_label_added": source_label_added,
         }
 
     detail = "\n".join(errors) if errors else "no models are available (check your .env and Ollama)"

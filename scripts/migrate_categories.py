@@ -6,13 +6,19 @@ names often don't contain words like "smartphone", so searching by type failed.
 This script adds two columns (category_path, sub_category) WITHOUT touching
 product ids, stock, carts or orders.
 
-Run once:  python migrate_categories.py
+Run once:  python scripts/migrate_categories.py
 It is safe to run again.
 """
 
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))  # so "from shopagent import ..." works when this file is run directly
+
 import pandas as pd
 
-import db
+from shopagent import db  # noqa: E402
 
 
 def main() -> None:

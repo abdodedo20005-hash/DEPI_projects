@@ -15,10 +15,11 @@ Design rules:
 from datetime import datetime
 from pathlib import Path
 
-from db import get_conn
+from shopagent import config
+from shopagent.db import get_conn
 
 TAX_RATE = 0.0  # set e.g. 0.14 to add VAT to every order
-INVOICE_DIR = "invoices"
+INVOICE_DIR = str(config.INVOICE_DIR)
 
 CART_SCHEMA = """
 CREATE TABLE IF NOT EXISTS cart_items (
@@ -222,7 +223,7 @@ def _latin(text: str, limit: int = 60) -> str:
     return text.encode("latin-1", "replace").decode("latin-1")
 
 
-def generate_invoice(order_id: int, out_dir: str = INVOICE_DIR) -> dict:
+def generate_invoice(order_id: int, out_dir: str | None = None) -> dict:
     """Create a PDF invoice for an order and return its file path."""
     from fpdf import FPDF  # pip install fpdf2
 
@@ -270,7 +271,8 @@ def generate_invoice(order_id: int, out_dir: str = INVOICE_DIR) -> dict:
     pdf.set_font("Helvetica", "B", 12)
     pdf.cell(0, 9, f"Total: {order['total']:.2f} INR", align="R", new_x="LMARGIN", new_y="NEXT")
 
-    Path(out_dir).mkdir(parents=True, exist_ok=True)
-    path = Path(out_dir) / f"invoice_{order_id}_{datetime.now():%Y%m%d_%H%M%S}.pdf"
+    folder = Path(out_dir or INVOICE_DIR)  # read INVOICE_DIR now, so tests can change it
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"invoice_{order_id}_{datetime.now():%Y%m%d_%H%M%S}.pdf"
     pdf.output(str(path))
     return {"invoice_path": str(path), "order_id": order_id, "total": order["total"]}

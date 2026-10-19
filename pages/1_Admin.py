@@ -17,7 +17,7 @@ import pandas as pd
 import streamlit as st
 from dotenv import find_dotenv, load_dotenv
 
-import queries
+from shopagent import queries
 
 load_dotenv(find_dotenv(usecwd=True))
 

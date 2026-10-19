@@ -1,7 +1,28 @@
-data/
-.venv/
+# Python
 __pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Secrets (never commit these)
 .env
-*.pdf
+*.key
+
+# Data and databases (the Kaggle CSV is not redistributed; rebuild with python db.py)
+data/
+*.db
+
+# Generated at runtime
 invoices/
 test_invoices/
+eval_invoices/
+
+# Personal files
+*.pdf
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

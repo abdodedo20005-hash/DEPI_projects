@@ -1,8 +1,10 @@
 pandas
+numpy
 python-dotenv
-langchain-core
-langgraph
-langchain-ollama
-langchain-groq
-fpdf2
 streamlit
+fpdf2
+langchain-core
+langgraph<2
+langchain-groq
+langchain-ollama
+sentence-transformers

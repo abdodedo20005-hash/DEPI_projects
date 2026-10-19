@@ -18,10 +18,7 @@ from pathlib import Path
 
 import streamlit as st
 
-import agent
-import db
-import orders
-import queries
+from shopagent import agent, db, orders, queries
 
 st.set_page_config(page_title="ShopAgent-AI", page_icon="🛒", layout="wide")
 
@@ -112,7 +109,7 @@ with st.sidebar:
 
     customers = list_customers()
     if not customers:
-        st.error("No customers found. Run db.py first.")
+        st.error("No customers found. Run: python -m shopagent.db first.")
         st.stop()
     customer_names = dict(customers)
     customer_id = st.selectbox("Customer", list(customer_names), format_func=customer_names.get)

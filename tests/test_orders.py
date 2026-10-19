@@ -1,7 +1,7 @@
 """
 test_orders.py: checks the CP4 cart / order / invoice logic.
 
-Run:  python test_orders.py
+Run:  python tests/test_orders.py
 
 The tests run on a COPY of the database (data/test_shop.db), so your real
 stock is never touched.
@@ -11,7 +11,13 @@ import shutil
 import sqlite3
 from pathlib import Path
 
-import db
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))  # so "from shopagent import ..." works when this file is run directly
+
+from shopagent import db  # noqa: E402
 
 REAL_DB = db.DB_PATH
 TEST_DB = str(Path(REAL_DB).with_name("test_shop.db"))
@@ -20,10 +26,10 @@ TEST_DB = str(Path(REAL_DB).with_name("test_shop.db"))
 shutil.copy(REAL_DB, TEST_DB)
 db.DB_PATH = TEST_DB
 
-import orders  # noqa: E402
+from shopagent import orders  # noqa: E402
 
 orders.init_orders_schema()
-orders.INVOICE_DIR = "test_invoices"
+orders.INVOICE_DIR = str(ROOT / "test_invoices")
 
 
 def raw(sql, params=()):
@@ -148,6 +154,7 @@ def test_invoice_pdf_is_created():
     order = orders.create_order("t1")
     invoice = orders.generate_invoice(order["order_id"])
     assert Path(invoice["invoice_path"]).exists()
+    assert "test_invoices" in invoice["invoice_path"]  # tests must not write into invoices/
     assert Path(invoice["invoice_path"]).stat().st_size > 500
 
 

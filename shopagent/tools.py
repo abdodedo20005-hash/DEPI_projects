@@ -9,7 +9,7 @@ Rules:
 - Every function returns plain dicts/lists, so the LLM can read the result
 """
 
-from db import get_conn
+from shopagent.db import get_conn
 
 MAX_RESULTS = 5
 

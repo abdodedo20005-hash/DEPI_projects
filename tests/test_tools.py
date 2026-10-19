@@ -1,11 +1,17 @@
 """
 test_tools.py: checks that the CP2 tools work on their own.
 
-Run:  python test_tools.py
+Run:  python tests/test_tools.py
 (Requires data/shop.db from CP1.)
 """
 
-from tools import check_stock, compare_products, get_product_details, search_products
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))  # so "from shopagent import ..." works when this file is run directly
+
+from shopagent.tools import check_stock, compare_products, get_product_details, search_products  # noqa: E402
 
 
 def test_search_returns_results():

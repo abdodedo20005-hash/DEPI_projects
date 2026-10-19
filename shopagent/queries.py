@@ -6,7 +6,7 @@ Needs the category_path / sub_category columns (see migrate_categories.py).
 
 import re
 
-from db import get_conn
+from shopagent.db import get_conn
 
 LOW_STOCK_DEFAULT = 5
 

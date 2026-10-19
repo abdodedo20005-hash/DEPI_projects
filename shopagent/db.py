@@ -7,7 +7,7 @@ This file does 4 things:
 3. Generates stock levels and sample customers
 4. Runs a test search query to verify everything works
 
-Run:  python db.py
+Run:  python -m shopagent.db
 """
 
 import random
@@ -17,11 +17,13 @@ from pathlib import Path
 
 import pandas as pd
 
+from shopagent.config import DATA_DIR
+
 # ------------------------------------------------------------------
 # Settings: adjust to match your CSV file
 # ------------------------------------------------------------------
-DB_PATH = "data/shop.db"
-CSV_PATH = "data/amazon.csv"
+DB_PATH = str(DATA_DIR / "shop.db")
+CSV_PATH = str(DATA_DIR / "amazon.csv")
 
 # CSV column name (left) -> our column name (right)
 COLUMN_MAP = {
@@ -160,7 +162,9 @@ def search_products(query: str, max_price: float | None = None, limit: int = 5):
 # ------------------------------------------------------------------
 # Run Checkpoint 1
 # ------------------------------------------------------------------
-if __name__ == "__main__":
+def main() -> None:
+    if not Path(CSV_PATH).exists():
+        raise SystemExit(f"Missing {CSV_PATH}. Download the Kaggle Amazon Sales CSV and save it there.")
     init_db()
     count = load_products()
     seed_customers()
@@ -169,3 +173,7 @@ if __name__ == "__main__":
     # CP1 success criterion: this query must return results
     for row in search_products("cable", max_price=1000):
         print(row)
+
+
+if __name__ == "__main__":
+    main()
