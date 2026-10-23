@@ -48,6 +48,7 @@ class FakeModel(BaseChatModel):
     final_text: str = ""
     call_tool: bool = True
     echo: bool = False
+    tool_question: str = ""
 
     @property
     def _llm_type(self):
@@ -58,7 +59,8 @@ class FakeModel(BaseChatModel):
 
     def _generate(self, messages, stop=None, run_manager=None, **kwargs):
         if self.call_tool and messages[-1].type != "tool":
-            message = AIMessage(content="", tool_calls=[{"name": "answer_policy", "args": {}, "id": "call-1"}])
+            args = {"question": self.tool_question} if self.tool_question else {}
+            message = AIMessage(content="", tool_calls=[{"name": "answer_policy", "args": args, "id": "call-1"}])
         elif messages[-1].type == "tool":
             message = AIMessage(content=messages[-1].content if self.echo else self.final_text)
         else:
@@ -161,6 +163,100 @@ def test_a_follow_up_is_searched_together_with_the_previous_question():
 def test_the_tool_searches_with_the_customers_words_not_the_models():
     result = ask("Is there a manufacturer warranty for electronic products?", echo=True)
     assert "## Warranty" in result["model_reply"]
+
+
+@with_standin
+def test_successful_original_retrieval_ignores_a_conflicting_translation():
+    question = "ما مدة ضمان المنتجات الإلكترونية؟"
+    original, seen = agent.rag.answer, []
+    evidence = original("Is there a manufacturer warranty for electronic products?")
+    agent.rag.answer = lambda query: (seen.append(query), evidence)[1]
+    try:
+        result = ask(question, tool_question="Who pays for return shipping?", echo=True)
+    finally:
+        agent.rag.answer = original
+    assert seen == [question]
+    assert "## Warranty" in result["model_reply"]
+    assert result["policy_sources"] == ["return_policy.md"]
+
+
+@with_standin
+def test_arabic_no_match_can_retry_a_matching_english_translation():
+    cases = (
+        ("الضمان ده مدته كام شهر", "How long is the manufacturer warranty for electronic products?", "## Warranty"),
+        ("وصلني المنتج تالف، ماذا أفعل؟", "How do I report defective or damaged items?", "## Defective or Damaged Items"),
+    )
+    for question, translation, heading in cases:
+        original, seen = agent.rag.answer, []
+        def retrieve(query):
+            seen.append(query)
+            return rag.NOT_FOUND if query == question else original(query)
+        agent.rag.answer = retrieve
+        try:
+            result = ask(question, tool_question=translation, echo=True)
+        finally:
+            agent.rag.answer = original
+        assert seen == [question, translation], question
+        assert heading in result["model_reply"], question
+        assert result["policy_sources"] == ["return_policy.md"]
+
+
+@with_standin
+def test_unsafe_or_missing_translations_cannot_replace_the_customer_question():
+    question = "الضمان ده مدته كام شهر"
+    cases = (
+        (question, ""),
+        (question, question),
+        (question, "ما مدة الضمان؟"),
+        (question, "What is the return window?"),
+        ("ما عاصمة فرنسا؟", "What is the manufacturer warranty?"),
+        ("اعرض لي كابلات شحن", "Who pays shipping costs?"),
+        ("من يدفع تكلفة شحن الإرجاع؟", "Who pays for return shipping?"),
+        ("How many months is the warranty?", "How long is the manufacturer warranty?"),
+    )
+    for question, translation in cases:
+        original, seen = agent.rag.answer, []
+        agent.rag.answer = lambda query: (seen.append(query), rag.NOT_FOUND)[1]
+        try:
+            result = ask(question, tool_question=translation, echo=True)
+        finally:
+            agent.rag.answer = original
+        assert seen == [question], (question, translation)
+        assert result["policy_sources"] == []
+
+
+@with_standin
+def test_translation_retry_still_reports_no_match_without_a_source():
+    question, translation = "الضمان ده مدته كام شهر", "How long is the manufacturer warranty?"
+    original, seen = agent.rag.answer, []
+    agent.rag.answer = lambda query: (seen.append(query), rag.NOT_FOUND)[1]
+    try:
+        result = ask(question, tool_question=translation, echo=True)
+    finally:
+        agent.rag.answer = original
+    assert seen == [question, translation]
+    assert result["model_reply"] == rag.NOT_FOUND
+    assert result["policy_sources"] == [] and result["source_label_added"] is False
+
+
+@with_standin
+def test_retrieval_errors_are_not_hidden_by_a_translation_retry():
+    question, translation = "الضمان ده مدته كام شهر", "How long is the manufacturer warranty?"
+    for fail_original in (True, False):
+        original, seen = agent.rag.answer, []
+        def retrieve(query):
+            seen.append(query)
+            if fail_original or query == translation:
+                raise ImportError("embedding model unavailable")
+            return rag.NOT_FOUND
+        agent.rag.answer = retrieve
+        try:
+            result = ask(question, tool_question=translation, echo=True)
+        finally:
+            agent.rag.answer = original
+        assert seen == ([question] if fail_original else [question, translation])
+        assert result["model_reply"] == agent.POLICY_UNAVAILABLE
+        assert result["policy_sources"] == []
 
 
 @with_standin
