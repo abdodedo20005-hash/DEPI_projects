@@ -172,19 +172,39 @@ def policy_query(messages, tool_question=""):
     return humans[-1]
 
 
+def policy_translation(query, translation):
+    """Allow an English retrieval retry for the same explicit Arabic policy topic."""
+    translation = translation.strip()
+    topic = rag.topic_heading(query)
+    if (re.search(r"[\u0600-\u06ff]", query)
+            and not re.search(r"[\u0600-\u06ff]", translation)
+            and len(re.findall(r"[A-Za-z]+", translation)) >= 2
+            and topic in {"warranty", "general return policy", "defective or damaged items",
+                          "non-returnable items"}
+            and rag.topic_heading(translation) == topic):
+        return translation
+    return ""
+
+
 @tool
 def answer_policy(
     messages: Annotated[list, InjectedState("messages")],
     question: str = "",
 ) -> str:
-    """Retrieve the store's return, refund, defective-item, warranty or related return-shipping
-    policy. The customer's question is read from the conversation, so the argument is optional.
-    Use it for policy questions, not for product searches."""
+    """Retrieve policy evidence using the original customer question first.
+    For an Arabic question, pass its faithful English translation in question;
+    preserve its meaning and constraints without adding facts or an answer.
+    The translation is used only after an original no-match and a topic check.
+    Use this for policy questions, not product searches."""
     try:
         query = policy_query(messages, question)
         if not query:
             return POLICY_UNAVAILABLE
-        return rag.answer(query)
+        evidence = rag.answer(query)
+        translation = policy_translation(query, question)
+        if evidence == rag.NOT_FOUND and translation:
+            return rag.answer(translation)
+        return evidence
     except Exception as exc:
         print(f"[warn] policy retrieval failed: {type(exc).__name__}")
         return POLICY_UNAVAILABLE
@@ -213,7 +233,11 @@ Browsing rules:
 
 Policy rules:
 - For return, refund, damaged-item, warranty or related return-shipping questions, call
-  answer_policy (no arguments are needed: it reads the customer's question).
+  answer_policy. For Arabic questions, pass a faithful English translation in
+  question, including relevant context only for a genuine follow-up. Do not add
+  facts, time periods, policy conditions or an inferred answer to the translation.
+  The tool always searches the original customer message first and may retry the
+  translation when the original has no match. For English questions, omit question.
 - Answer only from the retrieved policy text. If it contains the answer, do not
   claim the information is missing. End the answer with the source title shown in the
   evidence, for example "Source: Return & Warranty Policy". Never mention file names.
