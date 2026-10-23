@@ -110,13 +110,13 @@ pip install -r requirements.txt
 | Variable          | Required | Default                                                       | Description                                                    |
 | ----------------- | -------- | ------------------------------------------------------------- | -------------------------------------------------------------- |
 | `GROQ_API_KEY`    | Yes      |                                                               | Groq API key                                                   |
-| `GROQ_MODEL`      | No       | `openai/gpt-oss-120b`                                         | Model for complex requests                                     |
-| `GROQ_FAST_MODEL` | No       | `openai/gpt-oss-20b`                                          | Model for simple requests                                      |
-| `OLLAMA_MODEL`    | No       | `qwen2.5:3b`                                                  | Local fallback model                                           |
+| `GROQ_MODEL`      | Yes       | `openai/gpt-oss-120b`                                         | Model for complex requests                                     |
+| `GROQ_FAST_MODEL` | Yes       | `openai/gpt-oss-20b`                                          | Model for simple requests                                      |
+| `OLLAMA_MODEL`    | Yes       | `qwen2.5:3b`                                                  | Local fallback model                                           |
 | `ADMIN_PASSWORD`  | No       |                                                               | Password for the Admin page                                    |
-| `RAG_EMBED_MODEL` | No       | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | Embedding model for policy search                              |
-| `RAG_MIN_SCORE`   | No       | `0.30`                                                        | Minimum cosine similarity for a policy match (calibrate it)    |
-| `RAG_TOPIC_BOOST` | No       | `0.25`                                                        | Keyword topic boost for ordering sections; `0` switches it off |
+| `RAG_EMBED_MODEL` | Yes       | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | Embedding model for policy search                              |
+| `RAG_MIN_SCORE`   | Yes       | `0.30`                                                        | Minimum cosine similarity for a policy match (calibrate it)    |
+| `RAG_TOPIC_BOOST` | Yes       | `0.25`                                                        | Keyword topic boost for ordering sections; `0` switches it off |
 
 Model names change often at the providers; if a model is retired, change the variable in `.env`, no code change needed.
 
